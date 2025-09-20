@@ -1,0 +1,45 @@
+{
+  "name": "nectar-network",
+  "version": "1.0.0",
+  "description": "A decentralized compute marketplace on Avalanche",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "frontend",
+    "dispatcher",
+    "provider-node"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:contracts && npm run install:frontend && npm run install:dispatcher && npm run install:provider",
+    "install:contracts": "cd contracts && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "install:dispatcher": "cd dispatcher && npm install",
+    "install:provider": "cd provider-node && npm install",
+    "dev": "docker-compose up",
+    "dev:contracts": "cd contracts && npm run node",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:dispatcher": "cd dispatcher && npm run dev",
+    "build": "npm run build:contracts && npm run build:frontend && npm run build:dispatcher",
+    "build:contracts": "cd contracts && npm run compile",
+    "build:frontend": "cd frontend && npm run build",
+    "build:dispatcher": "cd dispatcher && npm run build",
+    "test": "./test-integration.sh",
+    "test:contracts": "cd contracts && npm run test",
+    "deploy:local": "cd contracts && npm run deploy:local",
+    "deploy:testnet": "cd contracts && npm run deploy:testnet",
+    "demo": "./demo.sh"
+  },
+  "keywords": [
+    "blockchain",
+    "avalanche",
+    "defi",
+    "compute",
+    "marketplace",
+    "web3"
+  ],
+  "author": "Nectar Network Team",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

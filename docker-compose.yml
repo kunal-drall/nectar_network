@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  hardhat-node:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./contracts:/app
+    command: npm run node
+    networks:
+      - nectar-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_RPC_URL=http://hardhat-node:8545
+      - NEXT_PUBLIC_DISPATCHER_URL=http://dispatcher:3001
+    depends_on:
+      - hardhat-node
+      - dispatcher
+    networks:
+      - nectar-network
+
+  dispatcher:
+    build:
+      context: ./dispatcher
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./dispatcher:/app
+      - /app/node_modules
+    environment:
+      - RPC_URL=http://hardhat-node:8545
+      - PORT=3001
+    depends_on:
+      - hardhat-node
+    networks:
+      - nectar-network
+
+  provider-node:
+    build:
+      context: ./provider-node
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./provider-node:/app
+      - /app/node_modules
+    environment:
+      - DISPATCHER_URL=http://dispatcher:3001
+      - RPC_URL=http://hardhat-node:8545
+    depends_on:
+      - dispatcher
+    networks:
+      - nectar-network
+
+networks:
+  nectar-network:
+    driver: bridge
