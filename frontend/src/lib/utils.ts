@@ -8,6 +8,8 @@ export const CONTRACT_ADDRESSES: ContractAddresses = {
   reputation: process.env.NEXT_PUBLIC_REPUTATION_ADDRESS || '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
 };
 
+export const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS || '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
+
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'http://localhost:8545';
 
 export const NETWORK_CONFIG = {
