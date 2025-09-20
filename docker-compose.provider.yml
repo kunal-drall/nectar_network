@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  provider-node:
+    build: ./provider-node
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - STANDALONE_MODE=true
+      - PORT=3002
+      - PROVIDER_CAPABILITIES=cpu,general,docker,ml,rendering
+      - MAX_CONCURRENT_JOBS=5
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker-in-Docker capability
+    networks:
+      - nectar-network
+
+  # Optional: Add other services like dispatcher, frontend
+  # dispatcher:
+  #   build: ./dispatcher
+  #   ports:
+  #     - "3001:3001"
+  #   networks:
+  #     - nectar-network
+
+networks:
+  nectar-network:
+    driver: bridge

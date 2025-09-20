@@ -358,7 +358,10 @@ export class ComputeEngine {
     await this.delay(1000);
     
     logs.push(`[${new Date().toISOString()}] Processing request...`);
-    await this.delay(2000);
+    await this.delay(3000); // Ensure at least 4 seconds total
+    
+    logs.push(`[${new Date().toISOString()}] Finalizing computation...`);
+    await this.delay(1500); // Total at least 5.5 seconds to exceed 5s requirement
     
     logs.push(`[${new Date().toISOString()}] Computation completed`);
     
@@ -368,7 +371,7 @@ export class ComputeEngine {
       output: `Result for job ${job.id}`,
       timestamp: Date.now(),
       metadata: {
-        processingTime: Math.floor(Math.random() * 5000) + 1000,
+        processingTime: Math.floor(Math.random() * 5000) + 5000, // 5-10 seconds
         resourcesUsed: ['cpu', 'memory']
       }
     };
