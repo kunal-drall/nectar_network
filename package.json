@@ -23,10 +23,11 @@
     "build:contracts": "cd contracts && npm run compile",
     "build:frontend": "cd frontend && npm run build",
     "build:dispatcher": "cd dispatcher && npm run build",
-    "test": "npm run test:contracts",
+    "test": "./test-integration.sh",
     "test:contracts": "cd contracts && npm run test",
     "deploy:local": "cd contracts && npm run deploy:local",
-    "deploy:testnet": "cd contracts && npm run deploy:testnet"
+    "deploy:testnet": "cd contracts && npm run deploy:testnet",
+    "demo": "./demo.sh"
   },
   "keywords": [
     "blockchain",
