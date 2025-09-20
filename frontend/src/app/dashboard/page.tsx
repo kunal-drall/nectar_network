@@ -5,7 +5,7 @@ import { useWeb3 } from '@/hooks/useWeb3';
 import { useJobs } from '@/hooks/useJobs';
 import JobCard from '@/components/JobCard';
 import PostJobModal from '@/components/PostJobModal';
-import { Briefcase, Plus, DollarSign, Clock, CheckCircle } from 'lucide-react';
+import { Briefcase, Plus, DollarSign, Clock, CheckCircle, Hexagon } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useWeb3();
@@ -17,9 +17,14 @@ export default function DashboardPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
-          <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Connect Your Wallet</h2>
-          <p className="text-gray-600">
+          <div className="relative mb-6">
+            <Hexagon className="w-20 h-20 text-primary-400 mx-auto animate-pulse-glow" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🐝</span>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-4">Connect Your Wallet</h2>
+          <p className="text-neutral-600">
             Please connect your wallet to view your dashboard and manage your jobs.
           </p>
         </div>
@@ -36,29 +41,29 @@ export default function DashboardPage() {
       icon: Briefcase,
       label: 'Total Jobs',
       value: clientJobs.length,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-primary-600',
+      bgColor: 'bg-primary-100',
     },
     {
       icon: Clock,
       label: 'Active Jobs',
       value: activeJobs.length,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100',
+      color: 'text-secondary-600',
+      bgColor: 'bg-secondary-100',
     },
     {
       icon: CheckCircle,
       label: 'Completed',
       value: completedJobs.length,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
+      color: 'text-accent-600',
+      bgColor: 'bg-accent-100',
     },
     {
       icon: DollarSign,
       label: 'Total Spent',
       value: `${clientJobs.reduce((sum, job) => sum + parseFloat(job.reward), 0).toFixed(3)} ETH`,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      color: 'text-primary-600',
+      bgColor: 'bg-primary-100',
     },
   ];
 
@@ -73,15 +78,24 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Dashboard</h1>
-          <p className="text-gray-600">Manage your compute jobs and track progress</p>
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="relative">
+              <Hexagon className="w-8 h-8 text-primary-500" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm">🐝</span>
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold text-neutral-900">Client Dashboard</h1>
+          </div>
+          <p className="text-neutral-600">Manage your compute jobs and track progress</p>
         </div>
         <button
           onClick={() => setIsPostJobModalOpen(true)}
-          className="btn-primary inline-flex items-center space-x-2 mt-4 sm:mt-0"
+          className="btn-primary inline-flex items-center space-x-2 mt-4 sm:mt-0 animate-pulse-glow"
         >
           <Plus className="w-4 h-4" />
           <span>Post New Job</span>
+          <span className="text-lg">🍯</span>
         </button>
       </div>
 
@@ -90,12 +104,12 @@ export default function DashboardPage() {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="card text-center">
-              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg ${stat.bgColor} mb-4`}>
+            <div key={index} className="card text-center group hover:scale-105 transition-transform duration-300">
+              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg ${stat.bgColor} mb-4 group-hover:animate-float`}>
                 <Icon className={`w-6 h-6 ${stat.color}`} />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-              <div className="text-gray-600 text-sm">{stat.label}</div>
+              <div className="text-2xl font-bold text-neutral-900 mb-1">{stat.value}</div>
+              <div className="text-neutral-600 text-sm">{stat.label}</div>
             </div>
           );
         })}
@@ -106,23 +120,23 @@ export default function DashboardPage() {
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab('active')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
               activeTab === 'active'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
             }`}
           >
-            Active Jobs ({activeJobs.length})
+            Active Jobs ({activeJobs.length}) 🚀
           </button>
           <button
             onClick={() => setActiveTab('completed')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
               activeTab === 'completed'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
             }`}
           >
-            Completed ({completedJobs.length})
+            Completed ({completedJobs.length}) ✅
           </button>
         </nav>
       </div>
@@ -131,7 +145,7 @@ export default function DashboardPage() {
       {isLoading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-600">Loading jobs...</p>
+          <p className="mt-4 text-neutral-600">Loading jobs...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

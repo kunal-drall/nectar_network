@@ -175,7 +175,10 @@ export function Web3Provider({ children }: Web3ProviderProps) {
       if (isAvalancheNetwork(newChainId)) {
         toast.success('Connected to Avalanche network');
       } else {
-        toast.warning('Not on Avalanche network - some features may be limited');
+        toast('Not on Avalanche network - some features may be limited', {
+          icon: '⚠️',
+          duration: 6000,
+        });
       }
     };
 
@@ -240,9 +243,3 @@ export function useWeb3() {
   return context;
 }
 
-// Extend Window interface for TypeScript
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
