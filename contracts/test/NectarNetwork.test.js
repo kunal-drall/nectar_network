@@ -221,4 +221,61 @@ describe("Nectar Network Contracts", function () {
       expect(finalFeeRecipientBalance.sub(initialFeeRecipientBalance)).to.equal(platformFee);
     });
   });
+
+  describe("Full Workflow Integration", function () {
+    it("Should complete full job workflow with USDC payment", async function () {
+      const amount = ethers.utils.parseUnits("100", 6); // 100 USDC
+      const deadline = Math.floor(Date.now() / 1000) + 86400;
+
+      // 1. Register provider in reputation system
+      await reputation.connect(provider).registerProvider("ipfs://provider-metadata");
+
+      // 2. Post job with ETH (for simplicity in this test)
+      await jobManager.connect(client).postJob(
+        "Test Compute Job",
+        "Process data using GPU",
+        "GPU: RTX 4090, RAM: 32GB",
+        deadline,
+        { value: ethers.utils.parseEther("0.1") }
+      );
+
+      // 3. Assign job to provider
+      await jobManager.connect(client).assignJob(1, provider.address);
+
+      // 4. Create USDC escrow for the job
+      await mockUSDC.connect(client).approve(escrow.address, amount);
+      await escrow.connect(client).createEscrowUSDC(1, client.address, provider.address, amount);
+
+      // 5. Provider starts job
+      await jobManager.connect(provider).startJob(1);
+
+      // 6. Provider completes job
+      await jobManager.connect(provider).completeJob(1, "QmResultHash123");
+
+      // 7. Client releases payment
+      const initialProviderBalance = await mockUSDC.balanceOf(provider.address);
+      await escrow.connect(client).releasePayment(1);
+      const finalProviderBalance = await mockUSDC.balanceOf(provider.address);
+
+      // 8. Rate the provider
+      await reputation.connect(client).rateProvider(1, provider.address, 5, "Excellent work!");
+
+      // Verify job is completed
+      const job = await jobManager.getJob(1);
+      expect(job.status).to.equal(3); // Completed
+
+      // Verify payment was released
+      const expectedPayment = amount.sub(amount.mul(250).div(10000)); // minus 2.5% fee
+      expect(finalProviderBalance.sub(initialProviderBalance)).to.equal(expectedPayment);
+
+      // Verify provider rating
+      const rating = await reputation.getProviderRating(provider.address);
+      expect(rating).to.equal(5);
+
+      // Verify escrow is marked as released
+      const escrowData = await escrow.getEscrow(1);
+      expect(escrowData.released).to.be.true;
+      expect(escrowData.token).to.equal(mockUSDC.address);
+    });
+  });
 });
