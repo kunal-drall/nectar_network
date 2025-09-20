@@ -175,6 +175,57 @@ app.post('/execute', async (req, res) => {
   }
 });
 
+// Execute job endpoint (alias for /execute to match requirements)
+app.post('/execute-job', async (req, res) => {
+  try {
+    const { jobId, title, description, requirements } = req.body;
+
+    if (!jobId || !title) {
+      return res.status(400).json({
+        success: false,
+        error: 'jobId and title are required'
+      });
+    }
+
+    if (providerNodeService) {
+      const result = await providerNodeService.executeJob({
+        id: jobId,
+        title,
+        description: description || '',
+        requirements: requirements || '',
+        client: '0x0000000000000000000000000000000000000000',
+        provider: PROVIDER_CONFIG.address,
+        reward: '0',
+        deadline: 0,
+        status: 2, // InProgress
+        resultHash: '',
+        createdAt: Math.floor(Date.now() / 1000),
+        completedAt: 0
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          jobId,
+          result
+        }
+      });
+    } else {
+      return res.status(503).json({
+        success: false,
+        error: 'Provider service not ready'
+      });
+    }
+
+  } catch (error: any) {
+    console.error('Error executing job:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error'
+    });
+  }
+});
+
 // Initialize services
 let providerNodeService: ProviderNodeService;
 
