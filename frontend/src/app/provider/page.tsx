@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useWeb3 } from '@/hooks/useWeb3';
 import { useJobs } from '@/hooks/useJobs';
 import JobCard from '@/components/JobCard';
-import { Server, Play, CheckCircle, TrendingUp, DollarSign } from 'lucide-react';
+import { Server, Play, CheckCircle, TrendingUp, DollarSign, Hexagon } from 'lucide-react';
 
 export default function ProviderPage() {
   const { user } = useWeb3();
@@ -17,9 +17,14 @@ export default function ProviderPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
-          <Server className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Connect Your Wallet</h2>
-          <p className="text-gray-600">
+          <div className="relative mb-6">
+            <Hexagon className="w-20 h-20 text-secondary-400 mx-auto animate-pulse-glow" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🐝</span>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-4">Connect Your Wallet</h2>
+          <p className="text-neutral-600">
             Please connect your wallet to access the provider dashboard.
           </p>
         </div>
@@ -37,29 +42,29 @@ export default function ProviderPage() {
       icon: Server,
       label: 'Available Jobs',
       value: availableJobs.length,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-primary-600',
+      bgColor: 'bg-primary-100',
     },
     {
       icon: Play,
       label: 'My Active Jobs',
       value: assignedJobs.length,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100',
+      color: 'text-secondary-600',
+      bgColor: 'bg-secondary-100',
     },
     {
       icon: CheckCircle,
       label: 'Completed',
       value: completedJobs.length,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
+      color: 'text-accent-600',
+      bgColor: 'bg-accent-100',
     },
     {
       icon: DollarSign,
       label: 'Total Earned',
       value: `${completedJobs.reduce((sum, job) => sum + parseFloat(job.reward), 0).toFixed(3)} ETH`,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      color: 'text-primary-600',
+      bgColor: 'bg-primary-100',
     },
   ];
 
@@ -86,8 +91,16 @@ export default function ProviderPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Provider Dashboard</h1>
-        <p className="text-gray-600">Browse available jobs and manage your compute tasks</p>
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="relative">
+            <Hexagon className="w-8 h-8 text-secondary-500" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-sm">🐝</span>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-neutral-900">Provider Dashboard</h1>
+        </div>
+        <p className="text-neutral-600">Browse available jobs and manage your compute tasks</p>
       </div>
 
       {/* Provider Registration Notice */}
