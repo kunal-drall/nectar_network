@@ -55,18 +55,34 @@ export class ContractEventListener {
       this.escrowContract = new ethers.Contract(escrowAddress, ESCROW_ABI, this.provider);
       this.reputationContract = new ethers.Contract(reputationAddress, REPUTATION_ABI, this.provider);
 
-      // Test connection
-      await this.provider.getNetwork();
-      console.log('✅ Connected to blockchain network');
+      // Test connection with timeout and graceful fallback
+      try {
+        const network = await Promise.race([
+          this.provider.getNetwork(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Network connection timeout')), 5000)
+          )
+        ]) as any;
+        console.log(`✅ Connected to blockchain network: ${network.name} (${network.chainId})`);
+      } catch (networkError: any) {
+        console.warn('⚠️ Blockchain network not available:', networkError.message);
+        console.log('📡 Dispatcher will continue without blockchain integration');
+        console.log('🔄 Event listening will be disabled until network is available');
+        // Don't throw error - allow service to start without blockchain
+      }
 
       console.log('📋 Contract addresses:');
       console.log(`  - JobManager: ${jobManagerAddress}`);
       console.log(`  - Escrow: ${escrowAddress}`);
       console.log(`  - Reputation: ${reputationAddress}`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to initialize contract event listener:', error);
-      throw error;
+      // For critical errors other than network connectivity, still throw
+      if (!error.message.includes('could not detect network') && 
+          !error.message.includes('Network connection timeout')) {
+        throw error;
+      }
     }
   }
 
@@ -78,11 +94,21 @@ export class ContractEventListener {
 
     if (!this.jobManagerContract || !this.escrowContract || !this.reputationContract) {
       console.log('⚠️ Contracts not initialized, skipping event listener setup');
+      console.log('📡 REST API and WebSocket functionality will still be available');
       return;
     }
 
     try {
       console.log('🔊 Starting to listen for contract events...');
+
+      // Test network connectivity before setting up listeners
+      try {
+        await this.provider.getBlockNumber();
+      } catch (networkError) {
+        console.warn('⚠️ Network unavailable, skipping event listener setup');
+        console.log('🔄 Will retry on next restart when network is available');
+        return;
+      }
 
       // Job Manager Events
       this.jobManagerContract.on('JobPosted', async (jobId, client, title, reward, deadline, event) => {
