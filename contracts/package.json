@@ -4,7 +4,8 @@
   "description": "Smart contracts for Nectar Network",
   "main": "index.js",
   "scripts": {
-    "compile": "hardhat compile",
+    "compile": "node compile-fallback.js",
+    "compile:force": "hardhat compile",
     "test": "hardhat test",
     "node": "hardhat node",
     "deploy:local": "hardhat run scripts/deploy.js --network localhost",
