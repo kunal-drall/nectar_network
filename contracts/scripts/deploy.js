@@ -20,12 +20,27 @@ async function main() {
   await reputation.deployed();
   console.log("Reputation deployed to:", reputation.address);
 
-  // Deploy Escrow with JobManager address and fee recipient
+  // Deploy Escrow with JobManager address, fee recipient, and USDC token
   console.log("\nDeploying Escrow...");
   const Escrow = await hre.ethers.getContractFactory("Escrow");
-  const escrow = await Escrow.deploy(jobManager.address, deployer.address);
+  
+  // Use USDC token address for Avalanche network
+  // Avalanche Mainnet USDC: 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E
+  // Avalanche Testnet USDC: 0x5425890298aed601595a70AB815c96711a31Bc65
+  let usdcAddress;
+  if (hre.network.name === "avalanche-mainnet") {
+    usdcAddress = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"; // USDC on Avalanche
+  } else if (hre.network.name === "avalanche-testnet") {
+    usdcAddress = "0x5425890298aed601595a70AB815c96711a31Bc65"; // USDC on Avalanche Fuji
+  } else {
+    // For local testing, deploy a mock USDC or use zero address
+    usdcAddress = "0x0000000000000000000000000000000000000000";
+  }
+  
+  const escrow = await Escrow.deploy(jobManager.address, deployer.address, usdcAddress);
   await escrow.deployed();
   console.log("Escrow deployed to:", escrow.address);
+  console.log("USDC token address configured:", usdcAddress);
 
   // Save deployment addresses
   const deploymentInfo = {
@@ -83,7 +98,7 @@ async function main() {
     try {
       await hre.run("verify:verify", {
         address: escrow.address,
-        constructorArguments: [jobManager.address, deployer.address],
+        constructorArguments: [jobManager.address, deployer.address, usdcAddress],
       });
     } catch (error) {
       console.log("Escrow verification failed:", error.message);

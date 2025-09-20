@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IJobManager {
     function getJob(uint256 jobId) external view returns (
@@ -46,6 +47,7 @@ contract Escrow is ReentrancyGuard, Ownable {
         DisputeStatus disputeStatus;
         uint256 disputeRaisedAt;
         string disputeReason;
+        address token; // address(0) for ETH, token address for ERC20
     }
     
     mapping(uint256 => EscrowData) public escrows;
@@ -56,6 +58,7 @@ contract Escrow is ReentrancyGuard, Ownable {
     uint256 public constant MAX_FEE_PERCENTAGE = 1000; // 10%
     
     address public feeRecipient;
+    address public usdcToken; // USDC token address
     
     event EscrowCreated(
         uint256 indexed jobId,
@@ -101,13 +104,14 @@ contract Escrow is ReentrancyGuard, Ownable {
         _;
     }
     
-    constructor(address _jobManager, address _feeRecipient) {
+    constructor(address _jobManager, address _feeRecipient, address _usdcToken) {
         jobManager = IJobManager(_jobManager);
         feeRecipient = _feeRecipient;
+        usdcToken = _usdcToken;
     }
     
     /**
-     * @dev Create escrow for a job
+     * @dev Create escrow for a job (ETH payment)
      */
     function createEscrow(
         uint256 jobId,
@@ -127,12 +131,48 @@ contract Escrow is ReentrancyGuard, Ownable {
             refunded: false,
             disputeStatus: DisputeStatus.None,
             disputeRaisedAt: 0,
-            disputeReason: ""
+            disputeReason: "",
+            token: address(0) // ETH
         });
         
         escrowExists[jobId] = true;
         
         emit EscrowCreated(jobId, client, provider, msg.value);
+    }
+
+    /**
+     * @dev Create escrow for a job (USDC payment)
+     */
+    function createEscrowUSDC(
+        uint256 jobId,
+        address client,
+        address provider,
+        uint256 amount
+    ) external nonReentrant {
+        require(!escrowExists[jobId], "Escrow already exists for this job");
+        require(amount > 0, "Escrow amount must be greater than 0");
+        require(client != address(0) && provider != address(0), "Invalid addresses");
+        require(usdcToken != address(0), "USDC token not configured");
+        
+        // Transfer USDC from caller to this contract
+        IERC20(usdcToken).transferFrom(msg.sender, address(this), amount);
+        
+        escrows[jobId] = EscrowData({
+            jobId: jobId,
+            client: client,
+            provider: provider,
+            amount: amount,
+            released: false,
+            refunded: false,
+            disputeStatus: DisputeStatus.None,
+            disputeRaisedAt: 0,
+            disputeReason: "",
+            token: usdcToken
+        });
+        
+        escrowExists[jobId] = true;
+        
+        emit EscrowCreated(jobId, client, provider, amount);
     }
     
     /**
@@ -160,8 +200,15 @@ contract Escrow is ReentrancyGuard, Ownable {
         uint256 platformFee = (escrow.amount * platformFeePercentage) / 10000;
         uint256 providerPayment = escrow.amount - platformFee;
         
-        payable(escrow.provider).transfer(providerPayment);
-        payable(feeRecipient).transfer(platformFee);
+        if (escrow.token == address(0)) {
+            // ETH payment
+            payable(escrow.provider).transfer(providerPayment);
+            payable(feeRecipient).transfer(platformFee);
+        } else {
+            // ERC20 (USDC) payment
+            IERC20(escrow.token).transfer(escrow.provider, providerPayment);
+            IERC20(escrow.token).transfer(feeRecipient, platformFee);
+        }
         
         emit PaymentReleased(jobId, escrow.provider, providerPayment, platformFee);
     }
@@ -190,8 +237,15 @@ contract Escrow is ReentrancyGuard, Ownable {
         uint256 platformFee = (escrow.amount * platformFeePercentage) / 10000;
         uint256 providerPayment = escrow.amount - platformFee;
         
-        payable(escrow.provider).transfer(providerPayment);
-        payable(feeRecipient).transfer(platformFee);
+        if (escrow.token == address(0)) {
+            // ETH payment
+            payable(escrow.provider).transfer(providerPayment);
+            payable(feeRecipient).transfer(platformFee);
+        } else {
+            // ERC20 (USDC) payment
+            IERC20(escrow.token).transfer(escrow.provider, providerPayment);
+            IERC20(escrow.token).transfer(feeRecipient, platformFee);
+        }
         
         emit PaymentReleased(jobId, escrow.provider, providerPayment, platformFee);
     }
@@ -205,7 +259,13 @@ contract Escrow is ReentrancyGuard, Ownable {
         
         escrow.refunded = true;
         
-        payable(escrow.client).transfer(escrow.amount);
+        if (escrow.token == address(0)) {
+            // ETH refund
+            payable(escrow.client).transfer(escrow.amount);
+        } else {
+            // ERC20 (USDC) refund
+            IERC20(escrow.token).transfer(escrow.client, escrow.amount);
+        }
         
         emit PaymentRefunded(jobId, escrow.client, escrow.amount);
     }
@@ -238,15 +298,28 @@ contract Escrow is ReentrancyGuard, Ownable {
         
         if (favorClient) {
             escrow.refunded = true;
-            payable(escrow.client).transfer(escrow.amount);
+            if (escrow.token == address(0)) {
+                // ETH refund
+                payable(escrow.client).transfer(escrow.amount);
+            } else {
+                // ERC20 (USDC) refund
+                IERC20(escrow.token).transfer(escrow.client, escrow.amount);
+            }
             emit PaymentRefunded(jobId, escrow.client, escrow.amount);
         } else {
             escrow.released = true;
             uint256 platformFee = (escrow.amount * platformFeePercentage) / 10000;
             uint256 providerPayment = escrow.amount - platformFee;
             
-            payable(escrow.provider).transfer(providerPayment);
-            payable(feeRecipient).transfer(platformFee);
+            if (escrow.token == address(0)) {
+                // ETH payment
+                payable(escrow.provider).transfer(providerPayment);
+                payable(feeRecipient).transfer(platformFee);
+            } else {
+                // ERC20 (USDC) payment
+                IERC20(escrow.token).transfer(escrow.provider, providerPayment);
+                IERC20(escrow.token).transfer(feeRecipient, platformFee);
+            }
             emit PaymentReleased(jobId, escrow.provider, providerPayment, platformFee);
         }
         
@@ -274,5 +347,13 @@ contract Escrow is ReentrancyGuard, Ownable {
     function updateFeeRecipient(address newFeeRecipient) external onlyOwner {
         require(newFeeRecipient != address(0), "Invalid fee recipient");
         feeRecipient = newFeeRecipient;
+    }
+
+    /**
+     * @dev Update USDC token address (admin only)
+     */
+    function updateUSDCToken(address newUSDCToken) external onlyOwner {
+        require(newUSDCToken != address(0), "Invalid USDC token address");
+        usdcToken = newUSDCToken;
     }
 }

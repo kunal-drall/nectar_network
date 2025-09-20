@@ -18,11 +18,14 @@ export const JOB_MANAGER_ABI = [
 
 export const ESCROW_ABI = [
   "function createEscrow(uint256 jobId, address client, address provider) external payable",
+  "function createEscrowUSDC(uint256 jobId, address client, address provider, uint256 amount) external",
   "function releasePayment(uint256 jobId) external",
   "function autoReleasePayment(uint256 jobId) external",
   "function refundPayment(uint256 jobId) external",
   "function raiseDispute(uint256 jobId, string reason) external",
-  "function getEscrow(uint256 jobId) external view returns (tuple(uint256 jobId, address client, address provider, uint256 amount, bool released, bool refunded, uint8 disputeStatus, uint256 disputeRaisedAt, string disputeReason))",
+  "function getEscrow(uint256 jobId) external view returns (tuple(uint256 jobId, address client, address provider, uint256 amount, bool released, bool refunded, uint8 disputeStatus, uint256 disputeRaisedAt, string disputeReason, address token))",
+  "function updateUSDCToken(address newUSDCToken) external",
+  "function usdcToken() external view returns (address)",
   "event EscrowCreated(uint256 indexed jobId, address indexed client, address indexed provider, uint256 amount)",
   "event PaymentReleased(uint256 indexed jobId, address indexed provider, uint256 amount, uint256 platformFee)",
   "event PaymentRefunded(uint256 indexed jobId, address indexed client, uint256 amount)"

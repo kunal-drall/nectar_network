@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Nectar Network Contracts", function () {
-  let jobManager, escrow, reputation;
+  let jobManager, escrow, reputation, mockUSDC;
   let owner, client, provider, feeRecipient;
 
   beforeEach(async function () {
@@ -18,10 +18,18 @@ describe("Nectar Network Contracts", function () {
     reputation = await Reputation.deploy();
     await reputation.deployed();
 
-    // Deploy Escrow
+    // Deploy MockUSDC for testing
+    const MockUSDC = await ethers.getContractFactory("MockUSDC");
+    mockUSDC = await MockUSDC.deploy();
+    await mockUSDC.deployed();
+
+    // Deploy Escrow with MockUSDC address
     const Escrow = await ethers.getContractFactory("Escrow");
-    escrow = await Escrow.deploy(jobManager.address, feeRecipient.address);
+    escrow = await Escrow.deploy(jobManager.address, feeRecipient.address, mockUSDC.address);
     await escrow.deployed();
+
+    // Mint some USDC to client for testing
+    await mockUSDC.mint(client.address, ethers.utils.parseUnits("1000", 6)); // 1000 USDC
   });
 
   describe("JobManager", function () {
@@ -131,7 +139,7 @@ describe("Nectar Network Contracts", function () {
   });
 
   describe("Escrow", function () {
-    it("Should create escrow", async function () {
+    it("Should create escrow with ETH", async function () {
       const amount = ethers.utils.parseEther("1.0");
 
       await expect(escrow.createEscrow(1, client.address, provider.address, { value: amount }))
@@ -142,6 +150,75 @@ describe("Nectar Network Contracts", function () {
       expect(escrowData.amount).to.equal(amount);
       expect(escrowData.client).to.equal(client.address);
       expect(escrowData.provider).to.equal(provider.address);
+      expect(escrowData.token).to.equal("0x0000000000000000000000000000000000000000"); // ETH
+    });
+
+    it("Should create escrow with USDC", async function () {
+      const amount = ethers.utils.parseUnits("100", 6); // 100 USDC
+
+      // Approve escrow contract to spend USDC
+      await mockUSDC.connect(client).approve(escrow.address, amount);
+
+      await expect(escrow.connect(client).createEscrowUSDC(2, client.address, provider.address, amount))
+        .to.emit(escrow, "EscrowCreated")
+        .withArgs(2, client.address, provider.address, amount);
+
+      const escrowData = await escrow.getEscrow(2);
+      expect(escrowData.amount).to.equal(amount);
+      expect(escrowData.client).to.equal(client.address);
+      expect(escrowData.provider).to.equal(provider.address);
+      expect(escrowData.token).to.equal(mockUSDC.address); // USDC token
+    });
+
+    it("Should update USDC token address", async function () {
+      const newUSDCAddress = "0x1234567890123456789012345678901234567890";
+      
+      await expect(escrow.updateUSDCToken(newUSDCAddress))
+        .to.not.be.reverted;
+      
+      expect(await escrow.usdcToken()).to.equal(newUSDCAddress);
+    });
+
+    it("Should not allow non-owner to update USDC token", async function () {
+      const newUSDCAddress = "0x1234567890123456789012345678901234567890";
+      
+      await expect(escrow.connect(client).updateUSDCToken(newUSDCAddress))
+        .to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Should release USDC payment to provider", async function () {
+      const amount = ethers.utils.parseUnits("100", 6); // 100 USDC
+      const jobId = 3;
+
+      // Create and complete a job
+      const deadline = Math.floor(Date.now() / 1000) + 86400;
+      await jobManager.connect(client).postJob("Test Job", "Description", "Requirements", deadline, { value: ethers.utils.parseEther("1") });
+      await jobManager.connect(client).assignJob(1, provider.address);
+      await jobManager.connect(provider).startJob(1);
+      await jobManager.connect(provider).completeJob(1, "result-hash");
+
+      // Create USDC escrow
+      await mockUSDC.connect(client).approve(escrow.address, amount);
+      await escrow.connect(client).createEscrowUSDC(1, client.address, provider.address, amount);
+
+      // Check initial balances
+      const initialProviderBalance = await mockUSDC.balanceOf(provider.address);
+      const initialFeeRecipientBalance = await mockUSDC.balanceOf(feeRecipient.address);
+
+      // Release payment
+      await expect(escrow.connect(client).releasePayment(1))
+        .to.emit(escrow, "PaymentReleased");
+
+      // Check balances after release
+      const finalProviderBalance = await mockUSDC.balanceOf(provider.address);
+      const finalFeeRecipientBalance = await mockUSDC.balanceOf(feeRecipient.address);
+
+      // Calculate expected amounts (2.5% platform fee)
+      const platformFee = amount.mul(250).div(10000);
+      const providerPayment = amount.sub(platformFee);
+
+      expect(finalProviderBalance.sub(initialProviderBalance)).to.equal(providerPayment);
+      expect(finalFeeRecipientBalance.sub(initialFeeRecipientBalance)).to.equal(platformFee);
     });
   });
 });
