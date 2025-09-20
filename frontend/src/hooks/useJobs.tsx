@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useWeb3 } from './useWeb3';
 import { Job, JobStatus } from '@/types';
-import { CONTRACT_ADDRESSES } from '@/lib/utils';
-import { JOB_MANAGER_ABI } from '@/lib/abis';
+import { CONTRACT_ADDRESSES, USDC_ADDRESS } from '@/lib/utils';
+import { JOB_MANAGER_ABI, ESCROW_ABI } from '@/lib/abis';
 import { toast } from 'react-hot-toast';
 
 export function useJobs() {
@@ -19,6 +19,14 @@ export function useJobs() {
 
   const jobManagerWithSigner = signer
     ? new ethers.Contract(CONTRACT_ADDRESSES.jobManager, JOB_MANAGER_ABI, signer)
+    : null;
+
+  const escrowContract = provider
+    ? new ethers.Contract(CONTRACT_ADDRESSES.escrow, ESCROW_ABI, provider)
+    : null;
+
+  const escrowWithSigner = signer
+    ? new ethers.Contract(CONTRACT_ADDRESSES.escrow, ESCROW_ABI, signer)
     : null;
 
   const fetchJobs = async () => {
@@ -63,26 +71,63 @@ export function useJobs() {
     description: string,
     requirements: string,
     reward: string,
-    deadline: number
+    deadline: number,
+    paymentType: 'ETH' | 'USDC' = 'ETH'
   ) => {
-    if (!jobManagerWithSigner) {
+    if (!jobManagerWithSigner || !escrowWithSigner) {
       toast.error('Please connect your wallet');
       return;
     }
 
     try {
       setIsLoading(true);
-      const rewardWei = ethers.utils.parseEther(reward);
       
-      const tx = await jobManagerWithSigner.postJob(
-        title,
-        description,
-        requirements,
-        deadline,
-        { value: rewardWei }
-      );
+      if (paymentType === 'ETH') {
+        // Original ETH payment flow
+        const rewardWei = ethers.utils.parseEther(reward);
+        const tx = await jobManagerWithSigner.postJob(
+          title,
+          description,
+          requirements,
+          deadline,
+          { value: rewardWei }
+        );
+        await tx.wait();
+      } else {
+        // USDC payment flow
+        // First post the job without payment
+        const tx = await jobManagerWithSigner.postJob(
+          title,
+          description,
+          requirements,
+          deadline
+        );
+        const receipt = await tx.wait();
+        
+        // Get the job ID from the event
+        const jobPostedEvent = receipt.events?.find(
+          (event: any) => event.event === 'JobPosted'
+        );
+        
+        if (!jobPostedEvent) {
+          throw new Error('Failed to get job ID from transaction');
+        }
+        
+        const jobId = jobPostedEvent.args.jobId;
+        
+        // Create USDC escrow (Note: USDC approval should be done separately)
+        const decimals = 6; // USDC decimals
+        const amountWei = ethers.utils.parseUnits(reward, decimals);
+        
+        const escrowTx = await escrowWithSigner.createEscrowUSDC(
+          jobId,
+          user.address,
+          '0x0000000000000000000000000000000000000000', // Provider will be assigned later
+          amountWei
+        );
+        await escrowTx.wait();
+      }
 
-      await tx.wait();
       toast.success('Job posted successfully!');
       await fetchJobs();
     } catch (error: any) {
@@ -190,6 +235,44 @@ export function useJobs() {
   useEffect(() => {
     if (jobManagerContract) {
       fetchJobs();
+      
+      // Set up event listeners for real-time updates
+      const setupEventListeners = () => {
+        // Listen for job events
+        jobManagerContract.on('JobPosted', () => {
+          console.log('Job posted event detected');
+          fetchJobs();
+        });
+        
+        jobManagerContract.on('JobAssigned', () => {
+          console.log('Job assigned event detected');
+          fetchJobs();
+        });
+        
+        jobManagerContract.on('JobStarted', () => {
+          console.log('Job started event detected');
+          fetchJobs();
+        });
+        
+        jobManagerContract.on('JobCompleted', () => {
+          console.log('Job completed event detected');
+          fetchJobs();
+        });
+        
+        jobManagerContract.on('JobCancelled', () => {
+          console.log('Job cancelled event detected');
+          fetchJobs();
+        });
+      };
+
+      setupEventListeners();
+
+      // Cleanup event listeners on unmount
+      return () => {
+        if (jobManagerContract) {
+          jobManagerContract.removeAllListeners();
+        }
+      };
     }
   }, [jobManagerContract]);
 
