@@ -1,20 +1,10 @@
 import { Router, Request, Response } from 'express';
+import { injectServices } from '../utils/middleware';
 
 const router = Router();
 
-// This would be injected in a real application
-let providerManager: any = null;
-
-// Middleware to inject services (would be done properly in real app)
-router.use((req: any, res, next) => {
-  // In a real app, services would be injected via dependency injection
-  const app = (req as any).app;
-  const jobDispatchService = app.get('jobDispatchService');
-  if (jobDispatchService) {
-    providerManager = (jobDispatchService as any).providerManager;
-  }
-  next();
-});
+// Use service injection middleware
+router.use(injectServices);
 
 /**
  * GET /api/providers
@@ -24,20 +14,20 @@ router.get('/', (req: Request, res: Response) => {
   try {
     const { status, capability } = req.query;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
     let providers;
 
     if (status === 'online') {
-      providers = providerManager.getOnlineProviders();
+      providers = (req as any).providerManager.getOnlineProviders();
     } else if (status === 'available') {
-      providers = providerManager.getAvailableProviders();
+      providers = (req as any).providerManager.getAvailableProviders();
     } else if (capability) {
-      providers = providerManager.getProvidersByCapability(capability as string);
+      providers = (req as any).providerManager.getProvidersByCapability(capability as string);
     } else {
-      providers = providerManager.getAllProviders();
+      providers = (req as any).providerManager.getAllProviders();
     }
 
     return res.json({
@@ -63,11 +53,11 @@ router.get('/:address', (req: Request, res: Response) => {
   try {
     const { address } = req.params;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
-    const provider = providerManager.getProvider(address);
+    const provider = (req as any).providerManager.getProvider(address);
 
     if (!provider) {
       return res.status(404).json({ 
@@ -98,18 +88,18 @@ router.post('/:address/heartbeat', (req: Request, res: Response) => {
   try {
     const { address } = req.params;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
-    if (!providerManager.isProviderRegistered(address)) {
+    if (!(req as any).providerManager.isProviderRegistered(address)) {
       return res.status(404).json({ 
         success: false, 
         error: 'Provider not registered' 
       });
     }
 
-    providerManager.updateProviderHeartbeat(address);
+    (req as any).providerManager.updateProviderHeartbeat(address);
 
     return res.json({
       success: true,
@@ -134,7 +124,7 @@ router.put('/:address/capabilities', (req: Request, res: Response) => {
     const { address } = req.params;
     const { capabilities } = req.body;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
@@ -145,7 +135,7 @@ router.put('/:address/capabilities', (req: Request, res: Response) => {
       });
     }
 
-    const success = providerManager.updateProviderCapabilities(address, capabilities);
+    const success = (req as any).providerManager.updateProviderCapabilities(address, capabilities);
 
     if (!success) {
       return res.status(404).json({ 
@@ -177,7 +167,7 @@ router.post('/:address/status', (req: Request, res: Response) => {
     const { address } = req.params;
     const { isOnline } = req.body;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
@@ -189,9 +179,9 @@ router.post('/:address/status', (req: Request, res: Response) => {
     }
 
     if (isOnline) {
-      providerManager.setProviderOnline(address);
+      (req as any).providerManager.setProviderOnline(address);
     } else {
-      providerManager.setProviderOffline(address);
+      (req as any).providerManager.setProviderOffline(address);
     }
 
     return res.json({
@@ -214,11 +204,11 @@ router.post('/:address/status', (req: Request, res: Response) => {
  */
 router.get('/stats/overview', (req: Request, res: Response) => {
   try {
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
-    const stats = providerManager.getProviderStats();
+    const stats = (req as any).providerManager.getProviderStats();
 
     return res.json({
       success: true,
@@ -242,11 +232,11 @@ router.get('/top/:limit?', (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.params.limit) || 10;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
-    const topProviders = providerManager.getTopProviders(limit);
+    const topProviders = (req as any).providerManager.getTopProviders(limit);
 
     return res.json({
       success: true,
@@ -271,11 +261,11 @@ router.get('/:address/jobs', (req: Request, res: Response) => {
   try {
     const { address } = req.params;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
-    const jobIds = providerManager.getProviderJobs(address);
+    const jobIds = (req as any).providerManager.getProviderJobs(address);
 
     return res.json({
       success: true,
@@ -300,7 +290,7 @@ router.post('/find-best', (req: Request, res: Response) => {
   try {
     const { requirements, preferHighRating = true } = req.body;
 
-    if (!providerManager) {
+    if (!(req as any).providerManager) {
       return res.status(503).json({ error: 'Service not available' });
     }
 
@@ -311,7 +301,7 @@ router.post('/find-best', (req: Request, res: Response) => {
       });
     }
 
-    const bestProvider = providerManager.findBestProviderForJob(requirements, preferHighRating);
+    const bestProvider = (req as any).providerManager.findBestProviderForJob(requirements, preferHighRating);
 
     if (!bestProvider) {
       return res.status(404).json({ 

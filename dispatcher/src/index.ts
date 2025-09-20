@@ -93,18 +93,30 @@ const initializeServices = async () => {
     // Initialize job dispatch service
     const jobDispatchService = new JobDispatchService(providerManager, wss);
     
+    // Store services in app for route access
+    app.set('jobDispatchService', jobDispatchService);
+    app.set('providerManager', providerManager);
+    
     // Initialize contract event listener
     const eventListener = new ContractEventListener(jobDispatchService, wss);
     await eventListener.initialize();
     
     console.log('All services initialized successfully');
     
-    // Start listening for events
+    // Start listening for events (this may gracefully fail if no network)
     await eventListener.startListening();
+    
+    console.log('🎉 Dispatcher service ready for requests');
     
   } catch (error) {
     console.error('Failed to initialize services:', error);
-    process.exit(1);
+    // Don't exit if it's just a network connectivity issue
+    if (error instanceof Error && error.message && error.message.includes('could not detect network')) {
+      console.log('📡 Continuing without blockchain integration...');
+      console.log('🔄 Service will work in offline mode');
+    } else {
+      process.exit(1);
+    }
   }
 };
 

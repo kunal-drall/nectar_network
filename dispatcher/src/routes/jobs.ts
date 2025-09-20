@@ -1,16 +1,10 @@
 import { Router, Request, Response } from 'express';
+import { injectServices } from '../utils/middleware';
 
 const router = Router();
 
-// This would be injected in a real application
-let jobDispatchService: any = null;
-
-// Middleware to inject services (would be done properly in real app)
-router.use((req: any, res, next) => {
-  // In a real app, services would be injected via dependency injection
-  jobDispatchService = (req as any).app.get('jobDispatchService');
-  next();
-});
+// Use service injection middleware
+router.use(injectServices);
 
 /**
  * GET /api/jobs
@@ -19,6 +13,7 @@ router.use((req: any, res, next) => {
 router.get('/', (req: Request, res: Response) => {
   try {
     const { status, provider } = req.query;
+    const jobDispatchService = (req as any).jobDispatchService;
 
     if (!jobDispatchService) {
       return res.status(503).json({ error: 'Service not available' });
@@ -56,6 +51,7 @@ router.get('/', (req: Request, res: Response) => {
 router.get('/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const jobDispatchService = (req as any).jobDispatchService;
 
     if (!jobDispatchService) {
       return res.status(503).json({ error: 'Service not available' });
@@ -92,6 +88,7 @@ router.post('/:id/assign', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { providerAddress } = req.body;
+    const jobDispatchService = (req as any).jobDispatchService;
 
     if (!jobDispatchService) {
       return res.status(503).json({ error: 'Service not available' });
@@ -133,6 +130,8 @@ router.post('/:id/assign', async (req: Request, res: Response) => {
  */
 router.get('/status/queue', (req: Request, res: Response) => {
   try {
+    const jobDispatchService = (req as any).jobDispatchService;
+
     if (!jobDispatchService) {
       return res.status(503).json({ error: 'Service not available' });
     }
@@ -159,6 +158,8 @@ router.get('/status/queue', (req: Request, res: Response) => {
  */
 router.get('/stats/overview', (req: Request, res: Response) => {
   try {
+    const jobDispatchService = (req as any).jobDispatchService;
+
     if (!jobDispatchService) {
       return res.status(503).json({ error: 'Service not available' });
     }
