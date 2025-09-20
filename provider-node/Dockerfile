@@ -7,15 +7,14 @@ RUN apk add --no-cache \
     python3 \
     py3-pip \
     build-base \
-    linux-headers
+    linux-headers \
+    git
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install
 
 COPY . .
 
-RUN npm run build
-
 EXPOSE 3002
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]

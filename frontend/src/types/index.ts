@@ -73,3 +73,36 @@ export interface ContractAddresses {
   escrow: string;
   reputation: string;
 }
+
+// Wallet and Network Types
+export interface WalletInfo {
+  name: string;
+  icon: string;
+  id: string;
+  downloadUrl?: string;
+}
+
+export interface NetworkConfig {
+  chainId: string;
+  chainName: string;
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  rpcUrls: string[];
+  blockExplorerUrls: string[];
+}
+
+export interface Web3ContextType {
+  user: User;
+  provider: any;
+  signer: any;
+  walletName: string;
+  chainId: number | null;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+  switchToAvalanche: () => Promise<void>;
+  isLoading: boolean;
+  isAvalanche: boolean;
+}

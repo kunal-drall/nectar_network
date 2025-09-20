@@ -50,7 +50,7 @@ export class ContractInterface {
   /**
    * Set up signer for transactions (would be done with provider's private key)
    */
-  setSigner(privateKey: string): void {
+  async setSigner(privateKey: string): Promise<void> {
     this.signer = new ethers.Wallet(privateKey, this.provider);
     
     if (this.jobManagerContract) {
@@ -61,7 +61,8 @@ export class ContractInterface {
       this.reputationContract = this.reputationContract.connect(this.signer);
     }
     
-    console.log(`🔐 Signer set for address: ${this.signer.address}`);
+    const address = await this.signer.getAddress();
+    console.log(`🔐 Signer set for address: ${address}`);
   }
 
   /**

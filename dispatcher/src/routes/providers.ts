@@ -40,7 +40,7 @@ router.get('/', (req: Request, res: Response) => {
       providers = providerManager.getAllProviders();
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: providers,
       total: providers.length
@@ -48,7 +48,7 @@ router.get('/', (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching providers:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -76,14 +76,14 @@ router.get('/:address', (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: provider
     });
 
   } catch (error) {
     console.error('Error fetching provider:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -111,14 +111,14 @@ router.post('/:address/heartbeat', (req: Request, res: Response) => {
 
     providerManager.updateProviderHeartbeat(address);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Heartbeat updated'
     });
 
   } catch (error) {
     console.error('Error updating heartbeat:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -154,14 +154,14 @@ router.put('/:address/capabilities', (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Capabilities updated'
     });
 
   } catch (error) {
     console.error('Error updating capabilities:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -194,14 +194,14 @@ router.post('/:address/status', (req: Request, res: Response) => {
       providerManager.setProviderOffline(address);
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: `Provider status updated to ${isOnline ? 'online' : 'offline'}`
     });
 
   } catch (error) {
     console.error('Error updating provider status:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -220,14 +220,14 @@ router.get('/stats/overview', (req: Request, res: Response) => {
 
     const stats = providerManager.getProviderStats();
 
-    res.json({
+    return res.json({
       success: true,
       data: stats
     });
 
   } catch (error) {
     console.error('Error fetching provider stats:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -248,7 +248,7 @@ router.get('/top/:limit?', (req: Request, res: Response) => {
 
     const topProviders = providerManager.getTopProviders(limit);
 
-    res.json({
+    return res.json({
       success: true,
       data: topProviders,
       total: topProviders.length
@@ -256,7 +256,7 @@ router.get('/top/:limit?', (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching top providers:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -277,7 +277,7 @@ router.get('/:address/jobs', (req: Request, res: Response) => {
 
     const jobIds = providerManager.getProviderJobs(address);
 
-    res.json({
+    return res.json({
       success: true,
       data: jobIds,
       total: jobIds.length
@@ -285,7 +285,7 @@ router.get('/:address/jobs', (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching provider jobs:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -320,14 +320,14 @@ router.post('/find-best', (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: bestProvider
     });
 
   } catch (error) {
     console.error('Error finding best provider:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });

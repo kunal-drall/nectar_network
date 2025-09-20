@@ -5,6 +5,7 @@ import { useWeb3 } from '@/hooks/useWeb3';
 import { useJobs } from '@/hooks/useJobs';
 import JobCard from '@/components/JobCard';
 import PostJobModal from '@/components/PostJobModal';
+import NetworkStatus from '@/components/NetworkStatus';
 import { Zap, TrendingUp, Users, Briefcase, Plus, Search } from 'lucide-react';
 
 export default function HomePage() {
@@ -45,6 +46,13 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Network Status - Show when wallet is connected */}
+      {user.isConnected && (
+        <div className="mb-6">
+          <NetworkStatus />
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="text-center mb-12">
         <div className="flex justify-center mb-4">
@@ -67,10 +75,16 @@ export default function HomePage() {
             <span>Post a Job</span>
           </button>
         ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
-            <p className="text-yellow-800">
-              Connect your wallet to start posting jobs or providing compute resources!
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+            <h3 className="font-semibold text-blue-900 mb-2">
+              🚀 Get Started with Avalanche
+            </h3>
+            <p className="text-blue-800 text-sm mb-4">
+              Connect any Avalanche-compatible wallet to start posting jobs or providing compute resources!
             </p>
+            <div className="text-xs text-blue-600">
+              Supported: MetaMask, Core Wallet, Coinbase Wallet, Trust Wallet, and more
+            </div>
           </div>
         )}
       </div>
@@ -155,7 +169,7 @@ export default function HomePage() {
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Post a Job</h3>
             <p className="text-gray-600">
-              Describe your compute requirements and set a reward in ETH.
+              Describe your compute requirements and set a reward in AVAX.
             </p>
           </div>
           <div className="text-center">

@@ -34,7 +34,7 @@ router.get('/', (req: Request, res: Response) => {
       jobs = jobDispatchService.getJobQueueStatus().jobs;
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: jobs,
       total: jobs.length
@@ -42,7 +42,7 @@ router.get('/', (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Error fetching jobs:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -70,14 +70,14 @@ router.get('/:id', (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: job
     });
 
   } catch (error) {
     console.error('Error fetching job:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -113,14 +113,14 @@ router.post('/:id/assign', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: `Job ${id} assigned to provider ${providerAddress}`
     });
 
   } catch (error) {
     console.error('Error assigning job:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -139,14 +139,14 @@ router.get('/status/queue', (req: Request, res: Response) => {
 
     const queueStatus = jobDispatchService.getJobQueueStatus();
 
-    res.json({
+    return res.json({
       success: true,
       data: queueStatus
     });
 
   } catch (error) {
     console.error('Error fetching queue status:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });
@@ -186,14 +186,14 @@ router.get('/stats/overview', (req: Request, res: Response) => {
       activeAssignments: queueStatus.activeAssignments
     };
 
-    res.json({
+    return res.json({
       success: true,
       data: stats
     });
 
   } catch (error) {
     console.error('Error fetching job stats:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 
     });

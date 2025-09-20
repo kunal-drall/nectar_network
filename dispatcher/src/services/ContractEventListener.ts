@@ -25,9 +25,9 @@ const REPUTATION_ABI = [
 
 export class ContractEventListener {
   private provider: ethers.providers.JsonRpcProvider;
-  private jobManagerContract: ethers.Contract;
-  private escrowContract: ethers.Contract;
-  private reputationContract: ethers.Contract;
+  private jobManagerContract: ethers.Contract | null = null;
+  private escrowContract: ethers.Contract | null = null;
+  private reputationContract: ethers.Contract | null = null;
   private jobDispatchService: JobDispatchService;
   private wss: WebSocketServer;
   private isListening = false;
@@ -73,6 +73,11 @@ export class ContractEventListener {
   async startListening(): Promise<void> {
     if (this.isListening) {
       console.log('Event listener is already running');
+      return;
+    }
+
+    if (!this.jobManagerContract || !this.escrowContract || !this.reputationContract) {
+      console.log('⚠️ Contracts not initialized, skipping event listener setup');
       return;
     }
 
@@ -138,6 +143,12 @@ export class ContractEventListener {
 
   private async handleJobPosted(jobId: ethers.BigNumber, client: string, title: string, reward: ethers.BigNumber, deadline: ethers.BigNumber, event: ethers.Event): Promise<void> {
     try {
+      // Check if contract is available
+      if (!this.jobManagerContract) {
+        console.log('⚠️ JobManager contract not available');
+        return;
+      }
+
       // Get full job details
       const jobDetails = await this.jobManagerContract.getJob(jobId);
       
@@ -329,9 +340,15 @@ export class ContractEventListener {
 
     console.log('🔇 Stopping event listener...');
     
-    this.jobManagerContract.removeAllListeners();
-    this.escrowContract.removeAllListeners();
-    this.reputationContract.removeAllListeners();
+    if (this.jobManagerContract) {
+      this.jobManagerContract.removeAllListeners();
+    }
+    if (this.escrowContract) {
+      this.escrowContract.removeAllListeners();
+    }
+    if (this.reputationContract) {
+      this.reputationContract.removeAllListeners();
+    }
     
     this.isListening = false;
     console.log('✅ Event listener stopped');

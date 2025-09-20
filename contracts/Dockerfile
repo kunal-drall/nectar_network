@@ -1,12 +1,14 @@
 FROM node:18-alpine
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install && npm ls hardhat
 
 COPY . .
 
 EXPOSE 8545
 
-CMD ["npm", "run", "node"]
+CMD ["npx", "hardhat", "node"]

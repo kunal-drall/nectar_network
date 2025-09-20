@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ProviderNodeService } from './services/ProviderNodeService';
-import { ComputeEngine } from './services/ComputeEngine';
+import { ComputeEngine } from './compute/ComputeEngine';
 import { ContractInterface } from './services/ContractInterface';
 
 // Load environment variables
@@ -152,7 +152,7 @@ app.post('/execute', async (req, res) => {
         completedAt: 0
       });
 
-      res.json({
+      return res.json({
         success: true,
         data: {
           jobId,
@@ -160,7 +160,7 @@ app.post('/execute', async (req, res) => {
         }
       });
     } else {
-      res.status(503).json({
+      return res.status(503).json({
         success: false,
         error: 'Provider service not ready'
       });
@@ -168,7 +168,7 @@ app.post('/execute', async (req, res) => {
 
   } catch (error: any) {
     console.error('Error executing job:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'
     });
