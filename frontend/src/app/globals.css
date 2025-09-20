@@ -8,7 +8,19 @@
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    @apply text-gray-900 font-sans;
+  }
+  
+  /* CSS Variables for colors */
+  :root {
+    --avalanche-red: #E84142;
+    --avalanche-dark: #1a1a1a;
+    --avalanche-dark-gray: #2a2a2a;
+    --avalanche-light: #ffffff;
+    --nectar-gold: #FFD700;
+    --nectar-yellow: #FFC107;
+    --nectar-orange: #FF8C00;
+    --nectar-amber: #FFBF00;
   }
 }
 
@@ -55,5 +67,15 @@
   
   .status-cancelled {
     @apply status-badge bg-red-100 text-red-800;
+  }
+  
+  /* Landing page specific styles */
+  .text-gradient {
+    @apply bg-gradient-to-r from-nectar-gold via-nectar-yellow to-nectar-orange bg-clip-text text-transparent;
+  }
+  
+  /* Dashboard background override */
+  .dashboard-bg {
+    @apply bg-gray-50;
   }
 }
