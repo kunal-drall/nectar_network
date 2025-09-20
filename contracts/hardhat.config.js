@@ -8,7 +8,8 @@ module.exports = {
       optimizer: {
         enabled: true,
         runs: 200
-      }
+      },
+      viaIR: true // Enable IR compilation to resolve stack too deep errors
     }
   },
   paths: {

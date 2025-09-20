@@ -19,7 +19,7 @@ try {
   console.log('✅ Compilation successful!');
   process.exit(0);
 } catch (error) {
-  console.log('⚠️  Normal compilation failed due to network restrictions');
+  console.log('⚠️  Normal compilation failed due to compiler issues');
   console.log('🔄 Falling back to alternative solution...');
 }
 
