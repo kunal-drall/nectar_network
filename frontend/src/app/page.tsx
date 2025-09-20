@@ -1,189 +1,315 @@
 'use client';
 
-import { useState } from 'react';
-import { useWeb3 } from '@/hooks/useWeb3';
-import { useJobs } from '@/hooks/useJobs';
-import JobCard from '@/components/JobCard';
-import PostJobModal from '@/components/PostJobModal';
-import { Zap, TrendingUp, Users, Briefcase, Plus, Search } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ChevronDown, Zap, Shield, Globe, ArrowRight, Hexagon } from 'lucide-react';
+import Link from 'next/link';
 
-export default function HomePage() {
-  const { user } = useWeb3();
-  const { jobs, getAvailableJobs, assignJob, isLoading } = useJobs();
-  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+// Animated background components
+function FloatingBee({ delay = 0 }: { delay?: number }) {
+  const beeRef = useRef<HTMLDivElement>(null);
 
-  const availableJobs = getAvailableJobs();
-  const filteredJobs = availableJobs.filter(job =>
-    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const stats = [
-    {
-      icon: Briefcase,
-      label: 'Total Jobs',
-      value: jobs.length,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Available Jobs',
-      value: availableJobs.length,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-    },
-    {
-      icon: Users,
-      label: 'Active Providers',
-      value: 0, // Will be updated when reputation system is integrated
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-  ];
+  useEffect(() => {
+    if (beeRef.current) {
+      gsap.set(beeRef.current, {
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+      });
+      
+      gsap.to(beeRef.current, {
+        x: `+=${Math.random() * 400 - 200}`,
+        y: `+=${Math.random() * 200 - 100}`,
+        duration: 8 + Math.random() * 4,
+        repeat: -1,
+        yoyo: true,
+        ease: "power1.inOut",
+        delay,
+      });
+      
+      gsap.to(beeRef.current, {
+        rotation: 360,
+        duration: 20,
+        repeat: -1,
+        ease: "none",
+      });
+    }
+  }, [delay]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div
+      ref={beeRef}
+      className="absolute w-6 h-6 text-nectar-gold opacity-30 pointer-events-none"
+    >
+      <div className="animate-bounce-slow">🐝</div>
+    </div>
+  );
+}
+
+function FloatingHexagon({ delay = 0 }: { delay?: number }) {
+  const hexRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (hexRef.current) {
+      gsap.set(hexRef.current, {
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+      });
+      
+      gsap.to(hexRef.current, {
+        x: `+=${Math.random() * 300 - 150}`,
+        y: `+=${Math.random() * 300 - 150}`,
+        rotation: 360,
+        duration: 15 + Math.random() * 10,
+        repeat: -1,
+        yoyo: true,
+        ease: "power1.inOut",
+        delay,
+      });
+    }
+  }, [delay]);
+
+  return (
+    <div
+      ref={hexRef}
+      className="absolute opacity-20 pointer-events-none"
+    >
+      <Hexagon className="w-8 h-8 text-nectar-amber" />
+    </div>
+  );
+}
+
+function AnimatedBackground() {
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {/* Floating Bees */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <FloatingBee key={`bee-${i}`} delay={i * 2} />
+      ))}
+      
+      {/* Floating Hexagons */}
+      {Array.from({ length: 6 }).map((_, i) => (
+        <FloatingHexagon key={`hex-${i}`} delay={i * 3} />
+      ))}
+      
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-radial from-nectar-gold/5 via-transparent to-transparent" />
+    </div>
+  );
+}
+
+export default function LandingPage() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Hero animations
+      gsap.fromTo('.hero-title', 
+        { y: 100, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1, ease: 'power3.out' }
+      );
+      
+      gsap.fromTo('.hero-subtitle', 
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1, delay: 0.3, ease: 'power3.out' }
+      );
+      
+      gsap.fromTo('.hero-cta', 
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1, delay: 0.6, ease: 'power3.out' }
+      );
+
+      // Feature cards stagger animation (simple fallback)
+      gsap.fromTo('.feature-card', 
+        { y: 60, opacity: 0 },
+        { 
+          y: 0, 
+          opacity: 1, 
+          duration: 0.8, 
+          stagger: 0.2,
+          ease: 'power3.out',
+          delay: 2
+        }
+      );
+    });
+
+    return () => ctx.revert();
+  }, []);
+
+  const scrollToFeatures = () => {
+    featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <div className="min-h-screen bg-avalanche-dark text-avalanche-light overflow-hidden">
+      <AnimatedBackground />
+      
       {/* Hero Section */}
-      <div className="text-center mb-12">
-        <div className="flex justify-center mb-4">
-          <Zap className="w-16 h-16 text-primary-600" />
-        </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Welcome to Nectar Network
-        </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          A decentralized compute marketplace where you can post compute jobs or 
-          provide computing resources to earn rewards on the Avalanche network.
-        </p>
-        
-        {user.isConnected ? (
-          <button
-            onClick={() => setIsPostJobModalOpen(true)}
-            className="btn-primary text-lg px-8 py-3 inline-flex items-center space-x-2"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Post a Job</span>
-          </button>
-        ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
-            <p className="text-yellow-800">
-              Connect your wallet to start posting jobs or providing compute resources!
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="card text-center">
-              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg ${stat.bgColor} mb-4`}>
-                <Icon className={`w-6 h-6 ${stat.color}`} />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
-              <div className="text-gray-600">{stat.label}</div>
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center z-10">
+          <div className="mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-nectar-gold/20 rounded-full mb-6">
+              <div className="text-4xl animate-pulse-slow">🍯</div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Available Jobs Section */}
-      <div className="mb-12">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 sm:mb-0">
-            Available Jobs ({availableJobs.length})
-          </h2>
+            <h1 className="hero-title text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-nectar-gold via-nectar-yellow to-nectar-orange bg-clip-text text-transparent">
+              Nectar Network
+            </h1>
+            <p className="hero-subtitle text-xl md:text-2xl mb-8 text-gray-300 max-w-2xl mx-auto">
+              The sweetest way to access decentralized computing power on <span className="text-avalanche-red font-semibold">Avalanche</span>
+            </p>
+            <p className="hero-subtitle text-lg mb-12 text-gray-400 max-w-3xl mx-auto">
+              Connect compute providers and clients in a trustless marketplace. 
+              Post jobs, earn rewards, and help build the future of distributed computing.
+            </p>
+          </div>
           
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search jobs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-10 w-full sm:w-80"
-            />
+          <div className="hero-cta space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
+            <Link href="/dashboard" className="inline-flex items-center px-8 py-4 bg-avalanche-red hover:bg-red-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+              <span>Launch App</span>
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
+            <button 
+              onClick={scrollToFeatures}
+              className="inline-flex items-center px-8 py-4 bg-nectar-gold/20 hover:bg-nectar-gold/30 text-nectar-gold border border-nectar-gold/50 font-semibold rounded-lg transition-all duration-300"
+            >
+              <span>Learn More</span>
+              <ChevronDown className="ml-2 w-5 h-5 animate-bounce" />
+            </button>
           </div>
         </div>
+        
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <ChevronDown className="w-6 h-6 text-nectar-gold/70" />
+        </div>
+      </section>
 
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-600">Loading jobs...</p>
-          </div>
-        ) : filteredJobs.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                onAssign={assignJob}
-                userType="client"
-                showActions={false}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">
-              {searchTerm ? 'No jobs found matching your search.' : 'No jobs available at the moment.'}
+      {/* Features Section */}
+      <section ref={featuresRef} className="features-section relative py-20 px-4 sm:px-6 lg:px-8 bg-avalanche-darkGray/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6 text-avalanche-light">
+              Why Choose <span className="text-nectar-gold">Nectar Network</span>?
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Experience the power of decentralized computing with our innovative features
             </p>
-            {user.isConnected && (
-              <button
-                onClick={() => setIsPostJobModalOpen(true)}
-                className="btn-primary mt-4"
-              >
-                Post the First Job
-              </button>
-            )}
           </div>
-        )}
-      </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="feature-card bg-avalanche-darkGray/80 backdrop-blur-sm p-8 rounded-xl border border-nectar-gold/20 hover:border-nectar-gold/40 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-nectar-gold/20 rounded-lg mb-4">
+                  <Zap className="w-8 h-8 text-nectar-gold" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-avalanche-light">Lightning Fast</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Powered by Avalanche's sub-second finality, experience near-instant job execution and payments
+                </p>
+              </div>
+            </div>
+            
+            {/* Feature 2 */}
+            <div className="feature-card bg-avalanche-darkGray/80 backdrop-blur-sm p-8 rounded-xl border border-nectar-gold/20 hover:border-nectar-gold/40 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-avalanche-red/20 rounded-lg mb-4">
+                  <Shield className="w-8 h-8 text-avalanche-red" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-avalanche-light">Secure & Trustless</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Smart contracts ensure automatic payments and dispute resolution without intermediaries
+                </p>
+              </div>
+            </div>
+            
+            {/* Feature 3 */}
+            <div className="feature-card bg-avalanche-darkGray/80 backdrop-blur-sm p-8 rounded-xl border border-nectar-gold/20 hover:border-nectar-gold/40 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-lg mb-4">
+                  <Globe className="w-8 h-8 text-blue-400" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-avalanche-light">Global Network</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Access computing resources from providers worldwide, ensuring 24/7 availability
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* How It Works Section */}
-      <div className="bg-white rounded-lg p-8 shadow-sm border">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">How It Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="bg-primary-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl font-bold text-primary-600">1</span>
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Post a Job</h3>
-            <p className="text-gray-600">
-              Describe your compute requirements and set a reward in ETH.
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6 text-avalanche-light">
+              How It <span className="text-nectar-gold">Works</span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Three simple steps to harness the power of decentralized computing
             </p>
           </div>
-          <div className="text-center">
-            <div className="bg-primary-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl font-bold text-primary-600">2</span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-nectar-gold/20 rounded-full text-3xl font-bold text-nectar-gold mb-6 border-4 border-nectar-gold/30">
+                1
+              </div>
+              <h3 className="text-2xl font-semibold mb-4 text-avalanche-light">Post Your Job</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Describe your computing requirements, set a fair reward, and submit to the network
+              </p>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Provider Executes</h3>
-            <p className="text-gray-600">
-              Compute providers pick up your job and execute it securely.
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="bg-primary-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl font-bold text-primary-600">3</span>
+            
+            {/* Step 2 */}
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-avalanche-red/20 rounded-full text-3xl font-bold text-avalanche-red mb-6 border-4 border-avalanche-red/30">
+                2
+              </div>
+              <h3 className="text-2xl font-semibold mb-4 text-avalanche-light">Provider Executes</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Qualified compute providers compete to complete your job efficiently and securely
+              </p>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Get Results</h3>
-            <p className="text-gray-600">
-              Receive your results and the provider gets paid automatically.
-            </p>
+            
+            {/* Step 3 */}
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500/20 rounded-full text-3xl font-bold text-green-400 mb-6 border-4 border-green-400/30">
+                3
+              </div>
+              <h3 className="text-2xl font-semibold mb-4 text-avalanche-light">Get Results</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Receive your computed results while providers automatically get paid upon completion
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Post Job Modal */}
-      <PostJobModal
-        isOpen={isPostJobModalOpen}
-        onClose={() => setIsPostJobModalOpen(false)}
-      />
+      {/* CTA Section */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-avalanche-red/10 to-nectar-gold/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-6 text-avalanche-light">
+            Ready to Join the <span className="text-nectar-gold">Swarm</span>?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            Whether you need computing power or want to provide it, Nectar Network is your gateway to the decentralized future
+          </p>
+          
+          <div className="space-y-4 sm:space-y-0 sm:space-x-6 sm:flex sm:justify-center">
+            <Link href="/dashboard" className="inline-flex items-center px-10 py-4 bg-avalanche-red hover:bg-red-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-xl">
+              <span>Start Computing</span>
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
+            <Link href="/dashboard" className="inline-flex items-center px-10 py-4 bg-nectar-gold hover:bg-yellow-500 text-avalanche-dark font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-xl">
+              <span>Become a Provider</span>
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
