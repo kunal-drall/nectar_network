@@ -15,7 +15,7 @@ console.log('==========================================');
 // Check if compilation is possible
 try {
   console.log('📡 Attempting normal Hardhat compilation...');
-  execSync('npx hardhat compile', { stdio: 'inherit' });
+  execSync('npm run compile:force', { stdio: 'inherit' });
   console.log('✅ Compilation successful!');
   process.exit(0);
 } catch (error) {
