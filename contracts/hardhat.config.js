@@ -3,12 +3,13 @@ require("@nomicfoundation/hardhat-toolbox");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.26",
+    version: "0.8.19",
     settings: {
       optimizer: {
         enabled: true,
         runs: 200
-      }
+      },
+      viaIR: true // Enable IR compilation to resolve stack too deep errors
     }
   },
   paths: {
